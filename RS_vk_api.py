@@ -3,6 +3,7 @@ import requests
 class VK:
     URL_VK_PHOTOS_GET: str = 'https://api.vk.com/method/photos.get'
     URL_VK_USERS_SEARCH: str = 'https://api.vk.com/method/users.search'
+    URL_VK_ACCOUNT_GETPROFILEINFO: str = 'https://api.vk.com/method/account.getProfileInfo'
 
     def __init__(self, access_token, user_id, version='5.131'):
         self.token = access_token
@@ -40,6 +41,16 @@ class VK:
             'offset': offset
         }
         response = requests.get(self.URL_VK_USERS_SEARCH,
+                                params={
+                                    **self.params,
+                                    **params
+                                })
+        return response.json()
+
+
+    def getProfileInfo(self):
+        params = {}
+        response = requests.get(self.URL_VK_ACCOUNT_GETPROFILEINFO,
                                 params={
                                     **self.params,
                                     **params

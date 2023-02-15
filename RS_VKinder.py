@@ -1,5 +1,6 @@
 import vk_api
 import psycopg2
+import datetime
 
 from vk_api.utils import get_random_id
 from vk_api.longpoll import VkLongPoll, VkEventType 
@@ -24,7 +25,7 @@ age = 0
 offset = 0
 current_search_id = 0
 
-status_dict = { 1:'не женат (не замужем)',2:'встречается',3:'помолвлен(-а)',4:'женат (замужем)',5:'всё сложно',6:'в активном поиске',7:'влюблен(-а)',8:'в гражданском браке'}
+status_dict = { 1:'не женат (не замужем)',2:'встречается',3:'помолвлен(-а)',4:'женат (замужем)',5:'всё сложно',6:'в активном поиске',7:'влюблен(-а)',8:'в гражданском браке',0:'Не указано'}
 sex_dict = {1:'Женский',2:'Мужской'}
 
 person_count_flag = False
@@ -61,16 +62,7 @@ session = VK(vk_token, vk_user_id)
 
 def init_arg():
     global person_count_flag
-    global hometown_flag
-    global sex_flag
-    global status_flag
-    global age_flag
-
     person_count_flag = False
-    hometown_flag = False
-    sex_flag = False 
-    status_flag = False
-    age_flag = False
 
 def write_msg(user_id, message, attachment=None):
     vk_session.method('messages.send', {'user_id': user_id, 'message': message, 'random_id': get_random_id(), "attachment": attachment })
@@ -100,6 +92,7 @@ def start_search():
     
     current_search_id = get_random_id()
     #print(person_count,hometown,sex,status,age,offset)
+
     dataU = session.users_search(person_count, hometown, sex, status, age, offset)
     respU_dct = dataU['response']
     #respU_cnt = respU_dct['count']
@@ -134,6 +127,9 @@ def start_search():
                     respF_dct = dataF['response']
                     #respF_cnt = respF_dct['count']
                     itemsF_list = respF_dct['items']
+                    
+                    write_msg(event.user_id, "Что-то нашли...")
+                    
                     lst_tmp = []
                     if len(itemsF_list) > 0:
                         for itemF in itemsF_list:
@@ -189,54 +185,23 @@ for event in longpoll.listen():
                 if person_count < 0 or person_count > 100:
                     person_count = 100
                     write_msg(event.user_id, "Ограничиваем кол-во просматриваемых профилей = 100 профилей!")
-                write_msg(event.user_id, "Семейное положение?\n1 — не женат (не замужем),\n2 — встречается,\n3 — помолвлен(-а),\n4 — женат (замужем),\n5 — всё сложно,\n6 — в активном поиске,\n7 — влюблен(-а),\n8 — в гражданском браке")
-                person_count_flag = False
-                status_flag = True
-                #print('person_count',person_count)
-                continue
+                
+                dataP = session.getProfileInfo()
+                respP_dct = dataP['response']
+                hometown = respP_dct['home_town'] if 'home_town' in respP_dct else ''
+                status = int(respP_dct['relation']) if 'relation' in respP_dct else 1
+                sex = int(respP_dct['sex']) if 'sex' in respP_dct else 1
+                bdate = respP_dct['bdate'] if 'bdate' in respP_dct else ''
+                if bdate != '':
+                    # текущая дата
+                    now = datetime.datetime.now()
+                    # возраст
+                    age = int(now.year) - int(str(bdate.split('.')[2]))
 
-            if status_flag:
-                status = int(msg)
-                if status < 1 or age > 8:
-                    status = 1
-                    write_msg(event.user_id, "Ограничиваем поиcк семейным положением не женат (не замужем)!")
-                write_msg(event.user_id, "Возраст?")
-                status_flag = False
-                age_flag = True
-                #print('status',status)
-                continue
-
-            if age_flag:
-                age = int(msg)
-                if age < 0 or age > 100:
-                    age = 25
-                    write_msg(event.user_id, "Ограничиваем посик возрастом в 25 лет!")
-                write_msg(event.user_id, "Город?")
-                age_flag = False
-                hometown_flag = True
-                #print('age',age)
-                continue
-
-            if hometown_flag:
-                hometown = msg
-                if hometown == '':
-                    hometown = 'Москва'
-                    write_msg(event.user_id, "Ограничиваем поиск по городу Москва!")
-                write_msg(event.user_id, "Пол?\n1-Женский\n2-Мужской")
-                hometown_flag = False
-                sex_flag = True
-                #print('hometown',hometown)
-                continue
-
-            if sex_flag:
-                sex = int(msg)
-                if sex not in [1,2]:
-                    sex = 1
-                    write_msg(event.user_id, "Ограничиваем поиск женским полом!")
-                sex_flag = False
-                #print('sex',sex)
                 write_msg(event.user_id, f"Параметры для поиска:\n...Город = {hometown}\n...Семейное положение = {status_dict[status]}\n...Возраст = {age}\n...Пол = {sex_dict[sex]}\n\nСтарт - для запуска поиска...")
+                person_count_flag = False
                 continue
+
 
             if msg == "привет":
                 write_msg(event.user_id, "И тебе не хворать, дорогой друг!")
