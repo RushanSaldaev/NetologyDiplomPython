@@ -176,104 +176,99 @@ def photos_get(p_id):
     conn.close()      
     return photos_list
     
-while True:
-    try:
-        for event in longpoll.listen():
-                        
-            if event.type == VkEventType.MESSAGE_NEW:
-                
-                #print(person_count,hometown,sex,status,age,offset)
+for event in longpoll.listen():
+    if event.type == VkEventType.MESSAGE_NEW:
+               
+        #print(person_count,hometown,sex,status,age,offset)
 
-                if event.to_me:
-                    msg = event.text.lower()
-                    if person_count_flag:
-                        person_count = int(msg)
-                        if person_count < 0 or person_count > 100:
-                            person_count = 100
-                            write_msg(event.user_id, "Ограничиваем кол-во просматриваемых профилей = 100 профилей!")
-                        write_msg(event.user_id, "Семейное положение?\n1 — не женат (не замужем),\n2 — встречается,\n3 — помолвлен(-а),\n4 — женат (замужем),\n5 — всё сложно,\n6 — в активном поиске,\n7 — влюблен(-а),\n8 — в гражданском браке")
-                        person_count_flag = False
-                        status_flag = True
-                        #print('person_count',person_count)
-                        continue
+        if event.to_me:
+            msg = event.text.lower()
+            
+            if person_count_flag:
+                person_count = int(msg)
+                if person_count < 0 or person_count > 100:
+                    person_count = 100
+                    write_msg(event.user_id, "Ограничиваем кол-во просматриваемых профилей = 100 профилей!")
+                write_msg(event.user_id, "Семейное положение?\n1 — не женат (не замужем),\n2 — встречается,\n3 — помолвлен(-а),\n4 — женат (замужем),\n5 — всё сложно,\n6 — в активном поиске,\n7 — влюблен(-а),\n8 — в гражданском браке")
+                person_count_flag = False
+                status_flag = True
+                #print('person_count',person_count)
+                continue
 
-                    if status_flag:
-                        status = int(msg)
-                        if status < 1 or age > 8:
-                            status = 1
-                            write_msg(event.user_id, "Ограничиваем поиcк семейным положением не женат (не замужем)!")
-                        write_msg(event.user_id, "Возраст?")
-                        status_flag = False
-                        age_flag = True
-                        #print('status',status)
-                        continue
+            if status_flag:
+                status = int(msg)
+                if status < 1 or age > 8:
+                    status = 1
+                    write_msg(event.user_id, "Ограничиваем поиcк семейным положением не женат (не замужем)!")
+                write_msg(event.user_id, "Возраст?")
+                status_flag = False
+                age_flag = True
+                #print('status',status)
+                continue
 
-                    if age_flag:
-                        age = int(msg)
-                        if age < 0 or age > 100:
-                            age = 25
-                            write_msg(event.user_id, "Ограничиваем посик возрастом в 25 лет!")
-                        write_msg(event.user_id, "Город?")
-                        age_flag = False
-                        hometown_flag = True
-                        #print('age',age)
-                        continue
+            if age_flag:
+                age = int(msg)
+                if age < 0 or age > 100:
+                    age = 25
+                    write_msg(event.user_id, "Ограничиваем посик возрастом в 25 лет!")
+                write_msg(event.user_id, "Город?")
+                age_flag = False
+                hometown_flag = True
+                #print('age',age)
+                continue
 
-                    if hometown_flag:
-                        hometown = msg
-                        if hometown == '':
-                            hometown = 'Москва'
-                            write_msg(event.user_id, "Ограничиваем поиск по городу Москва!")
-                        write_msg(event.user_id, "Пол?\n1-Женский\n2-Мужской")
-                        hometown_flag = False
-                        sex_flag = True
-                        #print('hometown',hometown)
-                        continue
+            if hometown_flag:
+                hometown = msg
+                if hometown == '':
+                    hometown = 'Москва'
+                    write_msg(event.user_id, "Ограничиваем поиск по городу Москва!")
+                write_msg(event.user_id, "Пол?\n1-Женский\n2-Мужской")
+                hometown_flag = False
+                sex_flag = True
+                #print('hometown',hometown)
+                continue
 
-                    if sex_flag:
-                        sex = int(msg)
-                        if sex not in [1,2]:
-                            sex = 1
-                            write_msg(event.user_id, "Ограничиваем поиск женским полом!")
-                        sex_flag = False
-                        #print('sex',sex)
-                        write_msg(event.user_id, f"Параметры для поиска:\n...Город = {hometown}\n...Семейное положение = {status_dict[status]}\n...Возраст = {age}\n...Пол = {sex_dict[sex]}\n\nСтарт - для запуска поиска...")
-                        continue
+            if sex_flag:
+                sex = int(msg)
+                if sex not in [1,2]:
+                    sex = 1
+                    write_msg(event.user_id, "Ограничиваем поиск женским полом!")
+                sex_flag = False
+                #print('sex',sex)
+                write_msg(event.user_id, f"Параметры для поиска:\n...Город = {hometown}\n...Семейное положение = {status_dict[status]}\n...Возраст = {age}\n...Пол = {sex_dict[sex]}\n\nСтарт - для запуска поиска...")
+                continue
 
-                    if msg == "привет":
-                        write_msg(event.user_id, "И тебе не хворать, дорогой друг!")
-                    elif msg == "пока":
-                        finish_work()
-                        write_msg(event.user_id, "До новых встреч!!!")
-                    elif msg == "начать":
-                        start_work()
-                        write_msg(event.user_id, "Создание БД перед началом запросов...")
-                        write_msg(event.user_id, "Какое кол-во профилей следует просмотреть?")
-                        person_count_flag = True
-                    elif msg in ["старт","еще","продолжить" ]:
-                        if msg in ["еще","продолжить" ]: 
-                            offset = offset + person_count
-                        write_msg(event.user_id, "Старт поиска...")
-                        start_search()
-                        write_msg(event.user_id, "Поиск завершён...")
-                    elif msg == "результат":
-                        rest_list = result_search(current_search_id)
-                        #print(rest_list)
-                        ixd = 0
-                        for item in rest_list:
-                            ixd += 1
-                            write_msg(event.user_id, f"==========================\n{ixd}: {item['fname']} {item['lname']}, профиль: https://vk.com/id{item['vkid']} ")                                                
-                            ph_list = photos_get(item['vkid'])
-                            #print('...',ph_list)
-                            ixp = 0
-                            for ph in ph_list:
-                                ixp += 1
-                                attachments = []
-                                attachments.append('photo{}_{}'.format(ph['ph_owner_id'], ph['ph_id']))
-                                attachment=','.join(attachments)
-                                write_msg(event.user_id, f"фото {ixp}: кол-во лайков = {ph['ph_likes']}, кол-во комментов = {ph['ph_comments']}",attachment)
-                    else:
-                        write_msg(event.user_id, "Не понял вашего вопроса...")
-                
-    except Exception as ex: 
-        print(ex)
+            if msg == "привет":
+                write_msg(event.user_id, "И тебе не хворать, дорогой друг!")
+            elif msg == "пока":
+                finish_work()
+                write_msg(event.user_id, "До новых встреч!!!")
+            elif msg == "начать":
+                start_work()
+                write_msg(event.user_id, "Создание БД перед началом запросов...")
+                write_msg(event.user_id, "Какое кол-во профилей следует просмотреть?")
+                person_count_flag = True
+            elif msg in ["старт","еще","продолжить" ]:
+                if msg in ["еще","продолжить" ]: 
+                    offset = offset + person_count
+                    write_msg(event.user_id, "Старт поиска...")
+                start_search()
+                write_msg(event.user_id, "Поиск завершён...")
+            elif msg == "результат":
+                rest_list = result_search(current_search_id)
+                #print(rest_list)
+                ixd = 0
+                for item in rest_list:
+                    ixd += 1
+                    write_msg(event.user_id, f"==========================\n{ixd}: {item['fname']} {item['lname']}, профиль: https://vk.com/id{item['vkid']} ")                                                
+                    ph_list = photos_get(item['vkid'])
+                    #print('...',ph_list)
+                    ixp = 0
+                    for ph in ph_list:
+                        ixp += 1
+                        attachments = []
+                        attachments.append('photo{}_{}'.format(ph['ph_owner_id'], ph['ph_id']))
+                        attachment=','.join(attachments)
+                        write_msg(event.user_id, f"фото {ixp}: кол-во лайков = {ph['ph_likes']}, кол-во комментов = {ph['ph_comments']}",attachment)
+            else:
+                write_msg(event.user_id, "Не понял вашего вопроса...")
